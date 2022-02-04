@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { Client, Message } from "@xmtp/xmtp-js";
-import { ethers } from "ethers";
+import { Signer } from "ethers";
 
 // const localNodeBootstrapAddr =
 //   "/ip4/127.0.0.1/tcp/9001/ws/p2p/16Uiu2HAmNCxLZCkXNbpVPBpSSnHj9iq4HZQj7fxRzw2kj1kKSHHA";
@@ -15,16 +15,15 @@ const testnetBootstrapAddr =
   "/dns4/bootstrap-node-0.testnet.xmtp.network/tcp/8443/wss/p2p/16Uiu2HAm888gVYpr4cZQ4qhEendQW6oYEhG8n6fnqw1jVW3Prdc6";
 
 type Conversation = {
-  createdAt: Date;
   peerAddress: string;
 };
 
 type XmtpContextType = {
-  wallet: ethers.Wallet | undefined;
+  wallet: Signer | undefined;
   walletAddress: string | undefined;
   client: Client | undefined;
   conversations: Conversation[];
-  connect: (wallet: ethers.Wallet) => void;
+  connect: (wallet: Signer) => void;
   disconnect: () => void;
 };
 
@@ -50,7 +49,7 @@ type XmtpProviderProps = {
 };
 
 export const XmtpProvider = ({ children }: XmtpProviderProps): JSX.Element => {
-  const [wallet, setWallet] = useState<ethers.Wallet>();
+  const [wallet, setWallet] = useState<Signer>();
   const [walletAddress, setWalletAddress] = useState<string>();
   const [client, setClient] = useState<Client>();
   const [conversations, dispatchConversations] = useReducer(
@@ -64,18 +63,15 @@ export const XmtpProvider = ({ children }: XmtpProviderProps): JSX.Element => {
             return convo.peerAddress === otherConvo.peerAddress;
           }) < 0
       );
-      return newConvos === undefined
-        ? []
-        : state
-            .concat(newConvos)
-            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      return newConvos === undefined ? [] : state.concat(newConvos);
     },
     []
   );
 
-  const connect = async (wallet: ethers.Wallet) => {
+  const connect = async (wallet: Signer) => {
     setWallet(wallet);
-    setWalletAddress(await wallet.getAddress());
+    const walletAddr = await wallet.getAddress();
+    setWalletAddress(walletAddr);
   };
 
   const disconnect = async () => {
@@ -101,25 +97,13 @@ export const XmtpProvider = ({ children }: XmtpProviderProps): JSX.Element => {
       if (!client) return;
       const msgs = await client.listIntroductionMessages();
       msgs.forEach((msg: Message) => {
-        if (!msg.header) return;
         const recipientAddress = msg.recipientAddress();
         const senderAddress = msg.senderAddress();
-        const createdAt = new Date(msg.header.timestamp);
         if (!recipientAddress || !senderAddress) return;
         if (recipientAddress === walletAddress) {
-          dispatchConversations([
-            {
-              createdAt,
-              peerAddress: senderAddress,
-            },
-          ]);
+          dispatchConversations([{ peerAddress: senderAddress }]);
         } else if (senderAddress == walletAddress) {
-          dispatchConversations([
-            {
-              createdAt,
-              peerAddress: recipientAddress,
-            },
-          ]);
+          dispatchConversations([{ peerAddress: recipientAddress }]);
         }
       });
     };
@@ -131,25 +115,13 @@ export const XmtpProvider = ({ children }: XmtpProviderProps): JSX.Element => {
       if (!client) return;
       const msgs = client.streamIntroductionMessages();
       for await (const msg of msgs) {
-        if (!msg.header) return;
         const recipientAddress = msg.recipientAddress();
         const senderAddress = msg.senderAddress();
-        const createdAt = new Date(msg.header.timestamp);
         if (!recipientAddress || !senderAddress) continue;
         if (recipientAddress === walletAddress) {
-          dispatchConversations([
-            {
-              createdAt,
-              peerAddress: senderAddress,
-            },
-          ]);
+          dispatchConversations([{ peerAddress: senderAddress }]);
         } else if (senderAddress == walletAddress) {
-          dispatchConversations([
-            {
-              createdAt,
-              peerAddress: recipientAddress,
-            },
-          ]);
+          dispatchConversations([{ peerAddress: recipientAddress }]);
         }
       }
     };
