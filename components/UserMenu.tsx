@@ -3,7 +3,6 @@ import { BellIcon } from '@heroicons/react/outline'
 import { Fragment, useCallback } from 'react'
 import { classNames } from '../helpers'
 import Address from './Address'
-import { useWallet } from './WalletContext'
 import { useXmtp } from './XmtpContext'
 
 type UserMenuProps = {
@@ -13,7 +12,6 @@ type UserMenuProps = {
 
 const UserMenu = ({ onConnect, onDisconnect }: UserMenuProps): JSX.Element => {
   const { walletAddress } = useXmtp()
-  const { lookupAddress } = useWallet()
 
   const onClickCopy = useCallback(() => {
     if (walletAddress) {
@@ -40,7 +38,6 @@ const UserMenu = ({ onConnect, onDisconnect }: UserMenuProps): JSX.Element => {
               <Address
                 address={walletAddress}
                 className="inline-flex items-center justify-center px-3 py-2 text-xs font-bold leading-none text-white bg-indigo-500 rounded"
-                lookupAddress={lookupAddress}
               />
             </Menu.Button>
           </div>

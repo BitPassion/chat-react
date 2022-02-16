@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
 import { classNames } from '../helpers'
 
 type AddressProps = {
   address: string
   className?: string
-  lookupAddress?: (address: string) => Promise<string | undefined>
 }
 
 const shortAddress = (addr: string): string =>
@@ -12,24 +10,10 @@ const shortAddress = (addr: string): string =>
     ? `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`
     : addr
 
-const Address = ({
-  address,
-  className,
-  lookupAddress,
-}: AddressProps): JSX.Element => {
-  const [name, setName] = useState<string>()
-
-  useEffect(() => {
-    if (!lookupAddress) return
-    const initName = async () => {
-      setName(await lookupAddress(address))
-    }
-    initName()
-  }, [address, lookupAddress])
-
+const Address = ({ address, className }: AddressProps): JSX.Element => {
   return (
     <div className={classNames(className || '')} title={address}>
-      {name || shortAddress(address)}
+      {shortAddress(address)}
     </div>
   )
 }
