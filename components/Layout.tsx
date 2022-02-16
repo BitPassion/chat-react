@@ -19,7 +19,7 @@ const TopRightLayout: React.FC = ({ children }) => (
 )
 
 const RightPanelLayout: React.FC = ({ children }) => (
-  <div className="md:pl-84 flex flex-col flex-1 h-screen">{children}</div>
+  <div className="md:pl-64 flex flex-col flex-1 h-screen">{children}</div>
 )
 
 const Layout: React.FC = ({ children }) => {
@@ -41,10 +41,6 @@ const Layout: React.FC = ({ children }) => {
   const handleConnect = useCallback(async () => {
     await connectWallet()
   }, [connectWallet])
-
-  const handleNewMessageButtonClick = useCallback(() => {
-    router.push('/')
-  }, [router])
 
   const usePrevious = <T,>(value: T): T | undefined => {
     const ref = useRef<T>()
@@ -86,7 +82,7 @@ const Layout: React.FC = ({ children }) => {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
         />
-        <DesktopSidebar onClickNewMessageButton={handleNewMessageButtonClick} />
+        <DesktopSidebar />
         <RightPanelLayout>
           <TopBarLayout>
             <HamburgerMenu setSidebarOpen={setSidebarOpen} />
