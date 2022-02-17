@@ -86,9 +86,7 @@ const Layout: React.FC = ({ children }) => {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
         />
-        <DesktopSidebar onClickNewMessageButton={handleNewMessageButtonClick}>
-          <UserMenu onConnect={handleConnect} onDisconnect={handleDisconnect} />
-        </DesktopSidebar>
+        <DesktopSidebar onClickNewMessageButton={handleNewMessageButtonClick} />
         <RightPanelLayout>
           <TopBarLayout>
             <HamburgerMenu setSidebarOpen={setSidebarOpen} />
@@ -96,6 +94,10 @@ const Layout: React.FC = ({ children }) => {
               <RecipientInput
                 initialAddress={router.query.recipientWalletAddr as string}
                 onSubmit={handleSubmit}
+              />
+              <UserMenu
+                onConnect={handleConnect}
+                onDisconnect={handleDisconnect}
               />
             </TopRightLayout>
           </TopBarLayout>
