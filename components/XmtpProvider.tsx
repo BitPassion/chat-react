@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useReducer, useState } from 'react'
+import { Conversation } from '@xmtp/xmtp-js'
 import { Client } from '@xmtp/xmtp-js'
 import { Signer } from 'ethers'
-import { Conversation } from '@xmtp/xmtp-js/dist/types/src/conversations'
 import { XmtpContext, XmtpContextType } from '../contexts/xmtp'
+import useMessageStore from '../hooks/useMessageStore'
 
 export const XmtpProvider: React.FC = ({ children }) => {
   const [wallet, setWallet] = useState<Signer>()
   const [walletAddress, setWalletAddress] = useState<string>()
   const [client, setClient] = useState<Client>()
+  const { getMessages, dispatchMessages } = useMessageStore()
+  const [loadingConversations, setLoadingConversations] =
+    useState<boolean>(false)
   const [conversations, dispatchConversations] = useReducer(
     (state: Conversation[], newConvos: Conversation[] | undefined) => {
       if (newConvos === undefined) {
@@ -50,10 +54,13 @@ export const XmtpProvider: React.FC = ({ children }) => {
   useEffect(() => {
     const listConversations = async () => {
       if (!client) return
+      console.log('Listing conversations')
+      setLoadingConversations(true)
       const convos = await client.conversations.list()
       convos.forEach((convo: Conversation) => {
         dispatchConversations([convo])
       })
+      setLoadingConversations(false)
     }
     listConversations()
   }, [client, walletAddress])
@@ -74,6 +81,9 @@ export const XmtpProvider: React.FC = ({ children }) => {
     walletAddress,
     client,
     conversations,
+    loadingConversations,
+    getMessages,
+    dispatchMessages,
     connect,
     disconnect,
   })
@@ -84,10 +94,23 @@ export const XmtpProvider: React.FC = ({ children }) => {
       walletAddress,
       client,
       conversations,
+      loadingConversations,
+      getMessages,
+      dispatchMessages,
       connect,
       disconnect,
     })
-  }, [wallet, walletAddress, client, conversations, connect, disconnect])
+  }, [
+    wallet,
+    walletAddress,
+    client,
+    conversations,
+    loadingConversations,
+    getMessages,
+    dispatchMessages,
+    connect,
+    disconnect,
+  ])
 
   return (
     <XmtpContext.Provider value={providerState}>
