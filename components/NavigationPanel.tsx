@@ -2,7 +2,6 @@ import { LinkIcon } from '@heroicons/react/outline'
 import { ChatIcon } from '@heroicons/react/outline'
 import useXmtp from '../hooks/useXmtp'
 import ConversationsList from './ConversationsList'
-import Loader from './Loader'
 
 const NavigationPanel = (): JSX.Element => {
   const { walletAddress } = useXmtp()
@@ -28,17 +27,7 @@ const NoWalletConnectedMessage = (): JSX.Element => {
 }
 
 const ConversationsPanel = (): JSX.Element => {
-  const { conversations, loadingConversations } = useXmtp()
-  if (loadingConversations && !conversations?.length) {
-    return (
-      <Loader
-        headingText="Loading conversations..."
-        subHeadingText="Please wait a moment"
-        isLoading
-      />
-    )
-  }
-
+  const { conversations } = useXmtp()
   return conversations && conversations.length > 0 ? (
     <nav className="flex-1 pb-4 space-y-1">
       <ConversationsList conversations={conversations} />

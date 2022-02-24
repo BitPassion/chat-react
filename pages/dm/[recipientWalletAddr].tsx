@@ -3,9 +3,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useRef } from 'react'
 import useXmtp from '../../hooks/useXmtp'
 import useConversation from '../../hooks/useConversation'
-import { MessagesList, MessageComposer } from '../../components/Conversation'
-import Loader from '../../components/Loader'
-
+import { ConversationView } from '../../components/Conversation'
 
 const Conversation: NextPage = () => {
   const router = useRouter()
@@ -17,7 +15,7 @@ const Conversation: NextPage = () => {
     ;(messagesEndRef.current as any)?.scrollIntoView({ behavior: 'smooth' })
   }, [messagesEndRef])
 
-  const { messages, sendMessage, loading } = useConversation(
+  const { messages, sendMessage } = useConversation(
     recipientWalletAddr,
     scrollToMessagesEndRef
   )
@@ -25,25 +23,14 @@ const Conversation: NextPage = () => {
   if (!recipientWalletAddr || !walletAddress) {
     return <div />
   }
-  if (loading && !messages?.length) {
-    return (
-      <Loader
-        headingText="Loading messages..."
-        subHeadingText="Please wait a moment"
-        isLoading
-      />
-    )
-  }
 
   return (
-    <main className="flex flex-col flex-1 bg-white h-screen">
-      <MessagesList
-        messagesEndRef={messagesEndRef}
-        messages={messages}
-        walletAddress={walletAddress}
-      />
-      {walletAddress && <MessageComposer onSend={sendMessage} />}
-    </main>
+    <ConversationView
+      messagesEndRef={messagesEndRef}
+      messages={messages}
+      onSend={sendMessage}
+      walletAddress={walletAddress}
+    />
   )
 }
 

@@ -4,8 +4,8 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import useWallet from '../hooks/useWallet'
-import { NavigationView, ConversationView } from './Views'
-import { RecipientControl } from './Conversation'
+import { NavigationView, MessageDetailView } from './Views'
+import RecipientInput from './RecipientInput'
 import NewMessageButton from './NewMessageButton'
 import NavigationPanel from './NavigationPanel'
 import UserMenu from './UserMenu'
@@ -29,15 +29,18 @@ const NavigationHeaderLayout: React.FC = ({ children }) => (
 )
 
 const TopBarLayout: React.FC = ({ children }) => (
-  <div className="sticky top-0 z-10 flex-shrink-0 flex bg-zinc-50 border-b border-gray-200 md:bg-white md:border-0">
+  <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white shadow items-center">
     {children}
   </div>
 )
 
-const ConversationLayout: React.FC = ({ children }) => {
-  const { walletAddress } = useXmtp()
+const TopRightLayout: React.FC = ({ children }) => (
+  <div className="flex-1 px-4 flex justify-between">{children}</div>
+)
+
+const MessageDetailLayout: React.FC = ({ children }) => {
   const router = useRouter()
-  const recipientWalletAddress = router.query.recipientWalletAddr as string
+  const initialAddress = router.query.recipientWalletAddr as string
 
   const handleSubmit = useCallback(
     async (address: string) => {
@@ -53,15 +56,15 @@ const ConversationLayout: React.FC = ({ children }) => {
   return (
     <>
       <TopBarLayout>
-        <div className="md:hidden flex items-center ml-3">
-          <BackArrow onClick={handleBackArrowClick} />
-        </div>
-        {walletAddress && (
-          <RecipientControl
-            recipientWalletAddress={recipientWalletAddress}
+        <TopRightLayout>
+          <div className="md:hidden">
+            <BackArrow onClick={handleBackArrowClick} />
+          </div>
+          <RecipientInput
+            initialAddress={initialAddress}
             onSubmit={handleSubmit}
           />
-        )}
+        </TopRightLayout>
       </TopBarLayout>
       {children}
     </>
@@ -144,9 +147,9 @@ const Layout: React.FC = ({ children }) => {
             />
           </NavigationColumnLayout>
         </NavigationView>
-        <ConversationView>
-          <ConversationLayout>{children}</ConversationLayout>
-        </ConversationView>
+        <MessageDetailView>
+          <MessageDetailLayout>{children}</MessageDetailLayout>
+        </MessageDetailView>
       </div>
     </>
   )

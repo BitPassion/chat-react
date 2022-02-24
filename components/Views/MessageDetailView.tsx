@@ -2,18 +2,20 @@ import { Transition } from '@headlessui/react'
 import { Fragment } from 'react'
 import { useRouter } from 'next/router'
 
-type ConversationViewProps = {
+type MessageDetailViewProps = {
   children?: React.ReactNode
 }
 
-const ConversationView = ({ children }: ConversationViewProps): JSX.Element => {
+const MessageDetailView = ({
+  children,
+}: MessageDetailViewProps): JSX.Element => {
   const router = useRouter()
   const show = router.pathname !== '/'
 
   return (
     <>
       <Transition.Root show={show} as={Fragment}>
-        <div className="md:hidden inset-0 flex flex-col h-screen bg-white ">
+        <div className="inset-0 flex md:hidden">
           <Transition.Child
             as={Fragment}
             enter="transition ease-in-out duration-300 transform"
@@ -23,7 +25,7 @@ const ConversationView = ({ children }: ConversationViewProps): JSX.Element => {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <div className="md:hidden relative flex-1 flex flex-col w-full">
+            <div className="relative flex-1 flex flex-col w-full bg-white">
               {children}
             </div>
           </Transition.Child>
@@ -31,11 +33,11 @@ const ConversationView = ({ children }: ConversationViewProps): JSX.Element => {
       </Transition.Root>
 
       {/* Always show in desktop layout */}
-      <div className="hidden md:bg-white md:pl-84 md:flex md:flex-col md:flex-1 md:h-screen">
+      <div className="hidden md:pl-84 md:flex md:flex-col md:flex-1 md:h-screen">
         {children}
       </div>
     </>
   )
 }
 
-export default ConversationView
+export default MessageDetailView
