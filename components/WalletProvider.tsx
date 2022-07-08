@@ -5,8 +5,6 @@ import WalletConnectProvider from '@walletconnect/web3-provider'
 import WalletLink from 'walletlink'
 import { WalletContext } from '../contexts/wallet'
 
-const ETH_CHAIN_ID = 1 // Ethereum mainnet
-
 const cachedLookupAddress = new Map<string, string | undefined>()
 const cachedResolveName = new Map<string, string | undefined>()
 const cachedGetAvatarUrl = new Map<string, string | undefined>()
@@ -22,21 +20,17 @@ export const WalletProvider = ({
   const [signer, setSigner] = useState<Signer>()
   const [web3Modal, setWeb3Modal] = useState<Web3Modal>()
   const [address, setAddress] = useState<string>()
-  const [chainId, setChainId] = useState<number>()
 
   const resolveName = useCallback(
     async (name: string) => {
       if (cachedResolveName.has(name)) {
         return cachedResolveName.get(name)
       }
-      if (chainId !== ETH_CHAIN_ID) {
-        return undefined
-      }
       const address = (await provider?.resolveName(name)) || undefined
       cachedResolveName.set(name, address)
       return address
     },
-    [chainId, provider]
+    [provider]
   )
 
   const lookupAddress = useCallback(
@@ -44,15 +38,11 @@ export const WalletProvider = ({
       if (cachedLookupAddress.has(address)) {
         return cachedLookupAddress.get(address)
       }
-      if (chainId !== ETH_CHAIN_ID) {
-        return undefined
-      }
-
       const name = (await provider?.lookupAddress(address)) || undefined
       cachedLookupAddress.set(address, name)
       return name
     },
-    [chainId, provider]
+    [provider]
   )
 
   const getAvatarUrl = useCallback(
@@ -88,25 +78,14 @@ export const WalletProvider = ({
     [address, disconnect]
   )
 
-  const handleChainChanged = useCallback(
-    ({ chainId }) => {
-      console.log('Chain changed to', chainId)
-      setChainId(chainId)
-    },
-    [setChainId]
-  )
-
   const connect = useCallback(async () => {
     if (!web3Modal) throw new Error('web3Modal not initialized')
     try {
       const instance = await web3Modal.connect()
       if (!instance) return
       instance.on('accountsChanged', handleAccountsChanged)
-      const provider = new ethers.providers.Web3Provider(instance, 'any')
-      provider.on('network', handleChainChanged)
+      const provider = new ethers.providers.Web3Provider(instance)
       const signer = provider.getSigner()
-      const { chainId } = await provider.getNetwork()
-      setChainId(chainId)
       setSigner(signer)
       setAddress(await signer.getAddress())
       return signer
@@ -116,7 +95,7 @@ export const WalletProvider = ({
       // modal, as "User closed modal"
       console.log('error', e)
     }
-  }, [web3Modal, handleAccountsChanged, handleChainChanged])
+  }, [web3Modal, handleAccountsChanged])
 
   useEffect(() => {
     const infuraId =
@@ -170,17 +149,14 @@ export const WalletProvider = ({
       const instance = await web3Modal.connectTo(cachedProviderName)
       if (!instance) return
       instance.on('accountsChanged', handleAccountsChanged)
-      const provider = new ethers.providers.Web3Provider(instance, 'any')
-      provider.on('network', handleChainChanged)
+      const provider = new ethers.providers.Web3Provider(instance)
       const signer = provider.getSigner()
-      const { chainId } = await provider.getNetwork()
-      setChainId(chainId)
       setProvider(provider)
       setSigner(signer)
       setAddress(await signer.getAddress())
     }
     initCached()
-  }, [web3Modal, handleAccountsChanged, handleChainChanged])
+  }, [web3Modal, handleAccountsChanged])
 
   return (
     <WalletContext.Provider
@@ -189,7 +165,6 @@ export const WalletProvider = ({
         signer,
         address,
         web3Modal,
-        chainId,
         resolveName,
         lookupAddress,
         getAvatarUrl,
