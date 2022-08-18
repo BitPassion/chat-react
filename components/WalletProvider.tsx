@@ -4,7 +4,6 @@ import Web3Modal, { IProviderOptions, providers } from 'web3modal'
 import WalletConnectProvider from '@walletconnect/web3-provider'
 import WalletLink from 'walletlink'
 import { WalletContext } from '../contexts/wallet'
-import { useRouter } from 'next/router'
 
 const ETH_CHAIN_ID = 1 // Ethereum mainnet
 
@@ -24,7 +23,6 @@ export const WalletProvider = ({
   const [web3Modal, setWeb3Modal] = useState<Web3Modal>()
   const [address, setAddress] = useState<string>()
   const [chainId, setChainId] = useState<number>()
-  const router = useRouter()
 
   const resolveName = useCallback(
     async (name: string) => {
@@ -79,9 +77,7 @@ export const WalletProvider = ({
       }
     })
     setSigner(undefined)
-    setAddress(undefined)
-    router.push('/')
-  }, [web3Modal, router])
+  }, [web3Modal])
 
   const handleAccountsChanged = useCallback(
     async (accounts: string[]) => {
