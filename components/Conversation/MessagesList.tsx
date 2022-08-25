@@ -4,10 +4,10 @@ import Emoji from 'react-emoji-render'
 import Avatar from '../Avatar'
 import { formatTime } from '../../helpers'
 import AddressPill from '../AddressPill'
+import useXmtp from '../../hooks/useXmtp'
 
 export type MessageListProps = {
   messages: Message[]
-  walletAddress: string | undefined
   messagesEndRef: MutableRefObject<null>
 }
 
@@ -75,15 +75,15 @@ const ConversationBeginningNotice = (): JSX.Element => (
 
 const MessagesList = ({
   messages,
-  walletAddress,
   messagesEndRef,
 }: MessageListProps): JSX.Element => {
   let lastMessageDate: Date | undefined
+  const { walletAddress } = useXmtp()
 
   return (
     <div className="flex-grow flex">
       <div className="pb-6 md:pb-0 w-full flex flex-col self-end">
-        <div className="relative w-full bg-white px-4 pt-6 overflow-y-auto flex">
+        <div className="max-h-[80vh] relative w-full bg-white px-4 pt-6 overflow-y-auto flex">
           <div className="w-full">
             {messages && messages.length ? (
               <ConversationBeginningNotice />
@@ -111,4 +111,4 @@ const MessagesList = ({
     </div>
   )
 }
-export default React.memo(MessagesList)
+export default MessagesList
