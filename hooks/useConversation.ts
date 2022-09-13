@@ -1,30 +1,20 @@
 import { Conversation, Message, Stream } from '@xmtp/xmtp-js'
 import { useState, useEffect, useContext } from 'react'
-import { WalletContext } from '../contexts/wallet'
 import XmtpContext from '../contexts/xmtp'
 import { checkIfPathIsEns } from '../helpers'
 import useMessageStore from './useMessageStore'
 
 type OnMessageCallback = () => void
 
-let stream: Stream<Message>
-let latestMsgId: string
-
 const useConversation = (
   peerAddress: string,
   onMessageCallback?: OnMessageCallback
 ) => {
   const { client } = useContext(XmtpContext)
-  const { address: walletAddress } = useContext(WalletContext)
   const { messageStore, dispatchMessages } = useMessageStore()
   const [conversation, setConversation] = useState<Conversation | null>(null)
+  const [stream, setStream] = useState<Stream<Message>>()
   const [loading, setLoading] = useState<boolean>(false)
-  const [browserVisible, setBrowserVisible] = useState<boolean>(true)
-
-  useEffect(() => {
-    window.addEventListener('focus', () => setBrowserVisible(true))
-    window.addEventListener('blur', () => setBrowserVisible(false))
-  }, [])
 
   useEffect(() => {
     const getConvo = async () => {
@@ -35,6 +25,15 @@ const useConversation = (
     }
     getConvo()
   }, [peerAddress])
+
+  useEffect(() => {
+    const closeStream = async () => {
+      if (!stream) return
+      await stream.return()
+    }
+    closeStream()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!conversation) return
@@ -61,13 +60,9 @@ const useConversation = (
       }
       setLoading(false)
     }
-    listMessages()
-  }, [conversation])
-
-  useEffect(() => {
-    if (!conversation) return
     const streamMessages = async () => {
-      stream = await conversation.streamMessages()
+      const stream = await conversation.streamMessages()
+      setStream(stream)
       for await (const msg of stream) {
         if (dispatchMessages) {
           dispatchMessages({
@@ -75,32 +70,14 @@ const useConversation = (
             messages: [msg],
           })
         }
-        if (latestMsgId !== msg.id) {
-          if (Notification.permission === 'granted') {
-            if (msg.senderAddress !== walletAddress && !browserVisible) {
-              new Notification('New Message On XMTP', {
-                body: `From ${msg.senderAddress}`,
-                icon: '/xmtp-icon.png',
-              })
-            }
-          }
-          latestMsgId = msg.id
-        }
         if (onMessageCallback) {
           onMessageCallback()
         }
       }
     }
+    listMessages()
     streamMessages()
-
-    return () => {
-      const closeStream = async () => {
-        if (!stream) return
-        await stream.return()
-      }
-      closeStream()
-    }
-  }, [conversation])
+  }, [conversation, dispatchMessages, onMessageCallback])
 
   const handleSend = async (message: string) => {
     if (!conversation) return
