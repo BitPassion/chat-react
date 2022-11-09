@@ -23,7 +23,7 @@ const RecipientControl = ({
   onSubmit,
 }: RecipientInputProps): JSX.Element => {
   const { resolveName, lookupAddress } = useContext(WalletContext)
-  const client = useAppStore((state = state.client))
+  const { client } = useContext(XmtpContext)
   const router = useRouter()
   const [recipientInputMode, setRecipientInputMode] = useState(
     RecipientInputMode.InvalidEntry

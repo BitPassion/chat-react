@@ -4,7 +4,7 @@ import { ChatIcon } from '@heroicons/react/outline'
 import Address from './Address'
 import { useRouter } from 'next/router'
 import { Conversation } from '@xmtp/xmtp-js'
-import { Message } from '@xmtp/xmtp-js'
+import { DecodedMessage } from '@xmtp/xmtp-js'
 import {
   classNames,
   truncate,
@@ -15,7 +15,6 @@ import {
 import Avatar from './Avatar'
 import XmtpContext from '../contexts/xmtp'
 import { WalletContext } from '../contexts/wallet'
-import { useAppStore } from '../store/app'
 
 type ConversationTileProps = {
   conversation: Conversation
@@ -23,7 +22,7 @@ type ConversationTileProps = {
   onClick?: () => void
 }
 
-const getLatestMessage = (messages: Message[]): Message | null =>
+const getLatestMessage = (messages: DecodedMessage[]): DecodedMessage | null =>
   messages?.length ? messages[messages.length - 1] : null
 
 const ConversationTile = ({
@@ -31,8 +30,7 @@ const ConversationTile = ({
   isSelected,
   onClick,
 }: ConversationTileProps): JSX.Element | null => {
-  const convoMessages = useAppStore((state = state.convoMessages))
-  const loadingConversations = useAppStore((state = state.loadingConversations))
+  const { convoMessages, loadingConversations } = useContext(XmtpContext)
 
   if (!convoMessages.get(conversation.peerAddress)?.length) {
     return null
@@ -106,9 +104,7 @@ const ConversationTile = ({
 
 const ConversationsList = (): JSX.Element => {
   const router = useRouter()
-  const conversations = useAppStore((state = state.conversations))
-  const convoMessages = useAppStore((state = state.convoMessages))
-
+  const { conversations, convoMessages } = useContext(XmtpContext)
   const { resolveName } = useContext(WalletContext)
 
   const orderByLatestMessage = (

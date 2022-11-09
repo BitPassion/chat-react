@@ -1,8 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import { MessagesList, MessageComposer } from './'
 import Loader from '../../components/Loader'
+import XmtpContext from '../../contexts/xmtp'
 import useConversation from '../../hooks/useConversation'
-import { useAppStore } from '../../store/app'
 
 type ConversationProps = {
   recipientWalletAddr: string
@@ -23,8 +29,7 @@ const Conversation = ({
     scrollToMessagesEndRef
   )
 
-  const convoMessages = useAppStore((state = state.convoMessages))
-  const loadingConversations = useAppStore((state = state.loadingConversations))
+  const { convoMessages, loadingConversations } = useContext(XmtpContext)
 
   const messages = useMemo(
     () => convoMessages.get(recipientWalletAddr) ?? [],

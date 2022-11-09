@@ -11,7 +11,6 @@ import BackArrow from './BackArrow'
 import { useCallback, useContext } from 'react'
 import { WalletContext } from '../contexts/wallet'
 import XmtpContext from '../contexts/xmtp'
-import { useAppStore } from '../store/app'
 
 const NavigationColumnLayout: React.FC = ({ children }) => (
   <aside className="flex w-full md:w-84 flex-col flex-grow fixed inset-y-0">
@@ -65,13 +64,14 @@ const ConversationLayout: React.FC = ({ children }) => {
 }
 
 const Layout: React.FC = ({ children }) => {
-  const client = useAppStore((state = state.client))
-  const { initClient } = useContext(XmtpContext)
-  const walletAddress = useAppStore((state = state.address))
-  const signer = useAppStore((state = state.signer))
+  const { client, initClient } = useContext(XmtpContext)
 
-  const { connect: connectWallet, disconnect: disconnectWallet } =
-    useContext(WalletContext)
+  const {
+    address: walletAddress,
+    connect: connectWallet,
+    disconnect: disconnectWallet,
+    signer,
+  } = useContext(WalletContext)
 
   const handleDisconnect = useCallback(async () => {
     await disconnectWallet()

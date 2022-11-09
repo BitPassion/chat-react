@@ -1,29 +1,32 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Client, Conversation, Message } from '@xmtp/xmtp-js'
+import { useCallback, useContext, useEffect, useState } from 'react'
+import { Client, Conversation, DecodedMessage } from '@xmtp/xmtp-js'
 import { Signer } from 'ethers'
-import { getEnv } from '../helpers'
+import { getEnv, getAppVersion } from '../helpers'
 import { XmtpContext, XmtpContextType } from '../contexts/xmtp'
-import { useAppStore } from '../store/app'
+import { WalletContext } from '../contexts/wallet'
 
 export const XmtpProvider: React.FC = ({ children }) => {
-  const walletAddress = useAppStore((state = state.address))
-  const signer = useAppStore((state = state.signer))
-  const client = useAppStore((state = state.client))
-  const setClient = useAppStore((state = state.setClient))
-  const convoMessages = useAppStore((state = state.convoMessages))
-  const setConvoMessages = useAppStore((state = state.setConvoMessages))
-  const conversations = useAppStore((state = state.conversations))
-  const setConversations = useAppStore((state = state.setConversations))
-  const loadingConversations = useAppStore((state = state.loadingConversations))
-  const setLoadingConversations = useAppStore(
-    (state = state.setLoadingConversations)
+  const [client, setClient] = useState<Client | null>()
+  const { signer, address: walletAddress } = useContext(WalletContext)
+  const [convoMessages, setConvoMessages] = useState<
+    Map<string, DecodedMessage[]>
+  >(new Map())
+  const [loadingConversations, setLoadingConversations] =
+    useState<boolean>(true)
+  const [conversations, setConversations] = useState<Map<string, Conversation>>(
+    new Map()
   )
 
   const initClient = useCallback(
     async (wallet: Signer) => {
       if (wallet && !client) {
         try {
-          setClient(await Client.create(wallet, { env: getEnv() }))
+          setClient(
+            await Client.create(wallet, {
+              env: getEnv(),
+              appVersion: getAppVersion(),
+            })
+          )
         } catch (e) {
           console.error(e)
           setClient(null)
@@ -49,7 +52,9 @@ export const XmtpProvider: React.FC = ({ children }) => {
     const listConversations = async () => {
       console.log('Listing conversations')
       setLoadingConversations(true)
-      const convos = await client.conversations.list()
+      const convos = (await client.conversations.list()).filter(
+        (conversation) => !conversation.context?.conversationId
+      )
       Promise.all(
         convos.map(async (convo) => {
           if (convo.peerAddress !== walletAddress) {
@@ -70,7 +75,10 @@ export const XmtpProvider: React.FC = ({ children }) => {
     const streamConversations = async () => {
       const stream = await client.conversations.stream()
       for await (const convo of stream) {
-        if (convo.peerAddress !== walletAddress) {
+        if (
+          !convo.context?.conversationId &&
+          convo.peerAddress !== walletAddress
+        ) {
           const messages = await convo.messages()
           convoMessages.set(convo.peerAddress, messages)
           setConvoMessages(new Map(convoMessages))
@@ -84,12 +92,22 @@ export const XmtpProvider: React.FC = ({ children }) => {
   }, [client])
 
   const [providerState, setProviderState] = useState<XmtpContextType>({
+    client,
     initClient,
+    loadingConversations,
+    conversations,
+    convoMessages,
+    setConvoMessages,
   })
 
   useEffect(() => {
     setProviderState({
+      client,
       initClient,
+      loadingConversations,
+      conversations,
+      convoMessages,
+      setConvoMessages,
     })
   }, [client, initClient, loadingConversations, conversations, convoMessages])
 

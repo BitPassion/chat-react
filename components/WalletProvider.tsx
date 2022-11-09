@@ -5,7 +5,6 @@ import WalletConnectProvider from '@walletconnect/web3-provider'
 import WalletLink from 'walletlink'
 import { WalletContext } from '../contexts/wallet'
 import { useRouter } from 'next/router'
-import { useAppStore } from '../store/app'
 
 // Ethereum mainnet
 const ETH_CHAIN_ID = 1
@@ -23,13 +22,13 @@ type WalletProviderProps = {
 // Consider the above while moving it to state variables
 let provider: ethers.providers.Web3Provider
 let chainId: number
+let signer: Signer | undefined
 
 export const WalletProvider = ({
   children,
 }: WalletProviderProps): JSX.Element => {
   const [web3Modal, setWeb3Modal] = useState<Web3Modal>()
-  const setAddress = useAppStore((state) => state.setAddress)
-  const setSigner = useAppStore((state) => state.setSigner)
+  const [address, setAddress] = useState<string>()
   const router = useRouter()
 
   const resolveName = useCallback(async (name: string) => {
@@ -76,7 +75,7 @@ export const WalletProvider = ({
         localStorage.removeItem(key)
       }
     })
-    setSigner(undefined)
+    signer = undefined
     setAddress(undefined)
     router.push('/')
   }, [router, web3Modal])
@@ -101,9 +100,9 @@ export const WalletProvider = ({
       const newSigner = provider.getSigner()
       const { chainId: newChainId } = await provider.getNetwork()
       chainId = newChainId
-      setSigner(newSigner)
-      setAddress(await newSigner.getAddress())
-      return newSigner
+      signer = newSigner
+      setAddress(await signer.getAddress())
+      return signer
     } catch (e) {
       // TODO: better error handling/surfacing here.
       // Note that web3Modal.connect throws an error when the user closes the
@@ -169,8 +168,8 @@ export const WalletProvider = ({
       const newSigner = provider.getSigner()
       const { chainId: newChainId } = await provider.getNetwork()
       chainId = newChainId
-      setSigner(newSigner)
-      setAddress(await newSigner.getAddress())
+      signer = newSigner
+      setAddress(await signer.getAddress())
     }
     initCached()
   }, [web3Modal])
@@ -178,6 +177,8 @@ export const WalletProvider = ({
   return (
     <WalletContext.Provider
       value={{
+        signer,
+        address,
         resolveName,
         lookupAddress,
         getAvatarUrl,
