@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ethers } from 'ethers'
+import { ethers, Signer } from 'ethers'
 import Web3Modal, { IProviderOptions, providers } from 'web3modal'
 import WalletConnectProvider from '@walletconnect/web3-provider'
 import WalletLink from 'walletlink'
+import { WalletContext } from '../contexts/wallet'
 import { useRouter } from 'next/router'
-import { useAppStore } from '../store/app'
 
 // Ethereum mainnet
 const ETH_CHAIN_ID = 1
@@ -13,24 +13,28 @@ const cachedLookupAddress = new Map<string, string | undefined>()
 const cachedResolveName = new Map<string, string | undefined>()
 const cachedGetAvatarUrl = new Map<string, string | undefined>()
 
+type WalletProviderProps = {
+  children?: React.ReactNode
+}
+
 // This variables are not added in state on purpose.
 // It saves few re-renders which then trigger the children to re-render
 // Consider the above while moving it to state variables
 let provider: ethers.providers.Web3Provider
+let chainId: number
+let signer: Signer | undefined
 
-const useWalletProvider = () => {
+export const WalletProvider = ({
+  children,
+}: WalletProviderProps): JSX.Element => {
   const [web3Modal, setWeb3Modal] = useState<Web3Modal>()
-  const setAddress = useAppStore((state) => state.setAddress)
-  const setSigner = useAppStore((state) => state.setSigner)
+  const [address, setAddress] = useState<string>()
   const router = useRouter()
 
   const resolveName = useCallback(async (name: string) => {
     if (cachedResolveName.has(name)) {
       return cachedResolveName.get(name)
     }
-
-    const { chainId } = (await provider?.getNetwork()) ?? 0
-
     if (chainId !== ETH_CHAIN_ID) {
       return undefined
     }
@@ -43,8 +47,6 @@ const useWalletProvider = () => {
     if (cachedLookupAddress.has(address)) {
       return cachedLookupAddress.get(address)
     }
-    const { chainId } = (await provider?.getNetwork()) ?? 0
-
     if (chainId !== ETH_CHAIN_ID) {
       return undefined
     }
@@ -73,7 +75,7 @@ const useWalletProvider = () => {
         localStorage.removeItem(key)
       }
     })
-    setSigner(undefined)
+    signer = undefined
     setAddress(undefined)
     router.push('/')
   }, [router, web3Modal])
@@ -82,6 +84,11 @@ const useWalletProvider = () => {
     disconnect()
   }, [disconnect])
 
+  const handleChainChanged = ({ chainId: newChainId }: { chainId: number }) => {
+    console.log('Chain changed to', newChainId)
+    chainId = newChainId
+  }
+
   const connect = useCallback(async () => {
     if (!web3Modal) throw new Error('web3Modal not initialized')
     try {
@@ -89,10 +96,13 @@ const useWalletProvider = () => {
       if (!instance) return
       instance.on('accountsChanged', handleAccountsChanged)
       provider = new ethers.providers.Web3Provider(instance, 'any')
+      provider.on('network', handleChainChanged)
       const newSigner = provider.getSigner()
-      setSigner(newSigner)
-      setAddress(await newSigner.getAddress())
-      return newSigner
+      const { chainId: newChainId } = await provider.getNetwork()
+      chainId = newChainId
+      signer = newSigner
+      setAddress(await signer.getAddress())
+      return signer
     } catch (e) {
       // TODO: better error handling/surfacing here.
       // Note that web3Modal.connect throws an error when the user closes the
@@ -154,20 +164,29 @@ const useWalletProvider = () => {
       if (!instance) return
       instance.on('accountsChanged', handleAccountsChanged)
       provider = new ethers.providers.Web3Provider(instance, 'any')
+      provider.on('network', handleChainChanged)
       const newSigner = provider.getSigner()
-      setSigner(newSigner)
-      setAddress(await newSigner.getAddress())
+      const { chainId: newChainId } = await provider.getNetwork()
+      chainId = newChainId
+      signer = newSigner
+      setAddress(await signer.getAddress())
     }
     initCached()
   }, [web3Modal])
 
-  return {
-    resolveName,
-    lookupAddress,
-    getAvatarUrl,
-    connect,
-    disconnect,
-  }
+  return (
+    <WalletContext.Provider
+      value={{
+        signer,
+        address,
+        resolveName,
+        lookupAddress,
+        getAvatarUrl,
+        connect,
+        disconnect,
+      }}
+    >
+      {children}
+    </WalletContext.Provider>
+  )
 }
-
-export default useWalletProvider

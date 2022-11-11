@@ -1,6 +1,8 @@
 import { LinkIcon } from '@heroicons/react/outline'
 import { ArrowSmRightIcon } from '@heroicons/react/solid'
-import { useAppStore } from '../store/app'
+import { useContext } from 'react'
+import { WalletContext } from '../contexts/wallet'
+import XmtpContext from '../contexts/xmtp'
 import ConversationsList from './ConversationsList'
 import Loader from './Loader'
 
@@ -13,8 +15,8 @@ type ConnectButtonProps = {
 }
 
 const NavigationPanel = ({ onConnect }: NavigationPanelProps): JSX.Element => {
-  const walletAddress = useAppStore((state) => state.address)
-  const client = useAppStore((state) => state.client)
+  const { address: walletAddress } = useContext(WalletContext)
+  const { client } = useContext(XmtpContext)
 
   return (
     <div className="flex-grow flex flex-col h-[82vh] overflow-y-auto">
@@ -64,10 +66,7 @@ const ConnectButton = ({ onConnect }: ConnectButtonProps): JSX.Element => {
 }
 
 const ConversationsPanel = (): JSX.Element => {
-  const client = useAppStore((state) => state.client)
-  const loadingConversations = useAppStore(
-    (state) => state.loadingConversations
-  )
+  const { loadingConversations, client } = useContext(XmtpContext)
 
   if (client === undefined) {
     return (

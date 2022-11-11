@@ -7,7 +7,8 @@ import {
   ChevronRightIcon,
   ArrowSmRightIcon,
 } from '@heroicons/react/solid'
-import { useAppStore } from '../store/app'
+import { WalletContext } from '../contexts/wallet'
+import { useContext } from 'react'
 
 type XmtpInfoRowProps = {
   icon: JSX.Element
@@ -51,7 +52,7 @@ const InfoRow = ({
 )
 
 const XmtpInfoPanel = ({ onConnect }: XmtpInfoPanelProps): JSX.Element => {
-  const walletAddress = useAppStore((state) => state.address)
+  const { address: walletAddress } = useContext(WalletContext)
   const InfoRows = [
     {
       icon: <LinkIcon />,
