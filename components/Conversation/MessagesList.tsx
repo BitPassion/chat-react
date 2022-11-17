@@ -1,10 +1,11 @@
 import { DecodedMessage } from '@xmtp/xmtp-js'
-import React, { FC, MutableRefObject } from 'react'
+import React, { MutableRefObject } from 'react'
 import Emoji from 'react-emoji-render'
 import Avatar from '../Avatar'
 import { formatTime } from '../../helpers'
 import AddressPill from '../AddressPill'
 import InfiniteScroll from 'react-infinite-scroll-component'
+import Loader from '../Loader'
 
 export type MessageListProps = {
   messages: DecodedMessage[]
@@ -71,12 +72,6 @@ const ConversationBeginningNotice = (): JSX.Element => (
   </div>
 )
 
-const LoadingMore: FC = () => (
-  <div className="p-1 mt-6 text-center text-gray-300 font-bold text-sm">
-    Loading Messages...
-  </div>
-)
-
 const MessagesList = ({
   messages,
   fetchNextMessages,
@@ -85,7 +80,7 @@ const MessagesList = ({
   let lastMessageDate: Date | undefined
 
   return (
-    <div className="flex h-[98%]">
+    <div className="flex-grow flex h-full">
       <div className="relative w-full h-full pl-4 flex">
         <div
           id="scrollableDiv"
@@ -98,7 +93,7 @@ const MessagesList = ({
             inverse
             endMessage={<ConversationBeginningNotice />}
             hasMore={hasMore}
-            loader={<LoadingMore />}
+            loader={<Loader subHeadingText="Loading messages..." isLoading />}
             scrollableTarget="scrollableDiv"
           >
             {messages?.map((msg: DecodedMessage, index: number) => {
