@@ -1,29 +1,21 @@
 import { Client } from '@xmtp/xmtp-js'
 import { Signer } from 'ethers'
 import { useCallback, useEffect, useState } from 'react'
-import {
-  getAppVersion,
-  getEnv,
-  loadKeys,
-  storeKeys,
-  wipeKeys,
-} from '../helpers'
+import { getEnv } from '../helpers'
 import { useAppStore } from '../store/app'
 
-const useInitXmtpClient = (cacheOnly = false) => {
+const useInitXmtpClient = () => {
   const signer = useAppStore((state) => state.signer)
-  const address = useAppStore((state) => state.address) ?? ''
   const client = useAppStore((state) => state.client)
   const setClient = useAppStore((state) => state.setClient)
-  const reset = useAppStore((state) => state.reset)
+  const setConvoMessages = useAppStore((state) => state.setConvoMessages)
+  const setConversations = useAppStore((state) => state.setConversations)
   const [isRequestPending, setIsRequestPending] = useState(false)
 
   const disconnect = () => {
     setClient(undefined)
-    reset()
-    if (signer) {
-      wipeKeys(address)
-    }
+    setConversations(new Map())
+    setConvoMessages(new Map())
   }
 
   const initClient = useCallback(
@@ -31,23 +23,8 @@ const useInitXmtpClient = (cacheOnly = false) => {
       if (wallet && !client) {
         try {
           setIsRequestPending(true)
-          let keys = loadKeys(address)
-          if (!keys) {
-            if (cacheOnly) {
-              return
-            }
-            keys = await Client.getKeys(wallet, {
-              env: getEnv(),
-              appVersion: getAppVersion(),
-            })
-            storeKeys(address, keys)
-          }
-          const xmtp = await Client.create(null, {
-            env: getEnv(),
-            appVersion: getAppVersion(),
-            privateKeyOverride: keys,
-          })
-          setClient(xmtp)
+          const response = await Client.create(wallet, { env: getEnv() })
+          setClient(response)
           setIsRequestPending(false)
         } catch (e) {
           console.error(e)

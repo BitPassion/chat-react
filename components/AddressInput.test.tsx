@@ -2,33 +2,23 @@ import React from 'react'
 import { render, fireEvent, act } from '@testing-library/react'
 import { waitFor } from '@testing-library/dom'
 import AddressInput from './AddressInput'
-import * as nextRouter from 'next/router'
-
-// @ts-expect-error mocked next router
-nextRouter.useRouter = jest.fn()
-
-// @ts-expect-error mocked next router
-nextRouter.useRouter.mockImplementation(() => ({ route: '/' }))
+import assert from 'assert'
 
 describe('AddressInput', () => {
   it('renders no initial value', () => {
-    let input: HTMLInputElement | null
     act(() => {
       const { container } = render(<AddressInput />)
-      input = container.querySelector('input')
+      expect(container.querySelector('input')).toHaveAttribute('value', '')
     })
-    waitFor(() => expect(input).toHaveAttribute('value', ''))
   })
 
   it('renders initial value', () => {
-    let input: HTMLInputElement | null
     act(() => {
       const { container } = render(
-        <AddressInput recipientWalletAddress={'0xfoo.eth'} />
+        <AddressInput recipientWalletAddress={'0xfoo'} />
       )
-      input = container.querySelector('input')
+      expect(container.querySelector('input')).toHaveAttribute('value', '0xfoo')
     })
-    waitFor(() => expect(input).toHaveAttribute('value', '0xfoo.eth'))
   })
 
   it('renders lookup for initial value', async () => {
@@ -59,7 +49,9 @@ describe('AddressInput', () => {
         />
       )
       input = container.querySelector('input')
-      input && fireEvent.change(input, { target: { value: '0xfoo' } })
+      assert.ok(input)
+      expect(input).toHaveAttribute('value', '0xbar')
+      fireEvent.change(input, { target: { value: '0xfoo' } })
     })
     waitFor(() => expect(input).toHaveAttribute('value', 'foo.eth'))
   })
