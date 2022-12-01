@@ -28,18 +28,7 @@ const MessageComposer = ({ onSend }: MessageComposerProps): JSX.Element => {
   }
 
   return (
-    <div
-      className={classNames(
-        'sticky',
-        'bottom-0',
-        'pl-4',
-        'pt-2',
-        'flex-shrink-0',
-        'flex',
-        'h-[68px]',
-        'bg-white'
-      )}
-    >
+    <div className={classNames('p-2', 'flex', 'bg-white', 'items-center')}>
       <form
         className={classNames(
           'flex',
